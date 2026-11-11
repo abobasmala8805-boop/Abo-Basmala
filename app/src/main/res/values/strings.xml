@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">SpotDiff AI</string>
+    <string name="hero_subtitle">Spot subtle AI-generated visual variations side-by-side, craft custom levels for friends, and race the global leaderboard.</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="creator_credit_title">Designed by Abo Basmala</string>
+    <string name="creator_support_phone">01060407111</string>
+    <string name="creator_support_email">abobasmala8805@gmail.com</string>
+    <string name="creator_support_subtitle">For user feedback and support inquiries: 01060407111 • abobasmala8805@gmail.com</string>
+    <string name="continue_as_guest">Continue as Guest (No Google Account)</string>
+    <string name="nav_play">Play AI</string>
+    <string name="nav_practice">Practice</string>
+    <string name="nav_designer">Designer</string>
+    <string name="nav_leaderboard">Leaderboard</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_options">Options</string>
+    <string name="generate_ai_level">Generate AI Level &amp; Play</string>
+</resources>

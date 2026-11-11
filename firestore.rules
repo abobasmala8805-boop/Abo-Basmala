@@ -1,0 +1,194 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Hardened Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTheme(theme) {
+      return theme is string && theme in ['NATURE', 'SPACE', 'GEOMETRIC', 'CYBERPUNK', 'ANCIENT'];
+    }
+
+    function isValidComplexity(complexity) {
+      return complexity is string && complexity in ['SUBTLE', 'MODERATE', 'INTRICATE'];
+    }
+
+    // Validation Blueprint for CustomLevel
+    function isValidCustomLevel(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 60 &&
+             data.title is string && data.title.size() >= 3 && data.title.size() <= 60 &&
+             data.scenePrompt is string && data.scenePrompt.size() >= 3 && data.scenePrompt.size() <= 400 &&
+             isValidTheme(data.theme) &&
+             data.variationCount is int && data.variationCount >= 3 && data.variationCount <= 10 &&
+             data.timeLimitSeconds is int && data.timeLimitSeconds >= 20 && data.timeLimitSeconds <= 300 &&
+             isValidComplexity(data.patternComplexity) &&
+             data.visibility is string && data.visibility in ['PRIVATE', 'SHARED'] &&
+             data.shareCode is string && data.shareCode.size() >= 4 && data.shareCode.size() <= 16 &&
+             data.spotsData is string && data.spotsData.size() >= 2 && data.spotsData.size() <= 4000 &&
+             data.playsCount is int && data.playsCount >= 0 && data.playsCount <= 1000000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // Validation Blueprint for LeaderboardEntry
+    function isValidLeaderboardEntry(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.playerName is string && data.playerName.size() >= 1 && data.playerName.size() <= 60 &&
+             data.playerAvatarData is string && data.playerAvatarData.size() >= 1 && data.playerAvatarData.size() <= 30000 &&
+             data.boardId is string && data.boardId in ['GLOBAL', 'PRIVATE'] &&
+             isValidTheme(data.theme) &&
+             data.variationCount is int && data.variationCount >= 3 && data.variationCount <= 10 &&
+             isValidComplexity(data.patternComplexity) &&
+             data.completionTimeMillis is int && data.completionTimeMillis >= 1000 && data.completionTimeMillis <= 600000 &&
+             data.score is int && data.score >= 0 && data.score <= 1000000 &&
+             data.levelTitle is string && data.levelTitle.size() >= 1 && data.levelTitle.size() <= 80 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // Validation Blueprint for UserProfile
+    function isValidUserProfile(data, profileId) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.userId == profileId &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+             data.avatarData is string && data.avatarData.size() >= 1 && data.avatarData.size() <= 30000 &&
+             data.avatarPrompt is string && data.avatarPrompt.size() >= 0 && data.avatarPrompt.size() <= 300 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // Collection: Custom Levels
+    match /custom_levels/{levelId} {
+      allow get: if isSignedIn() && isValidId(levelId) &&
+                    (existing().userId == request.auth.uid || existing().visibility == 'SHARED');
+
+      allow list: if isSignedIn() &&
+                     (existing().userId == request.auth.uid || existing().visibility == 'SHARED');
+
+      allow create: if isSignedIn() &&
+                       isValidId(levelId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'authorName', 'title', 'scenePrompt', 'theme',
+                         'variationCount', 'timeLimitSeconds', 'patternComplexity',
+                         'visibility', 'shareCode', 'spotsData', 'playsCount',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'authorName', 'title', 'scenePrompt', 'theme',
+                         'variationCount', 'timeLimitSeconds', 'patternComplexity',
+                         'visibility', 'shareCode', 'spotsData', 'playsCount',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidCustomLevel(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(levelId) &&
+                       isValidCustomLevel(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'scenePrompt', 'theme', 'variationCount',
+                         'timeLimitSeconds', 'patternComplexity', 'visibility',
+                         'spotsData', 'playsCount', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() &&
+                       isValidId(levelId) &&
+                       existing().userId == request.auth.uid;
+    }
+
+    // Collection: Leaderboard Entries
+    match /leaderboard_entries/{entryId} {
+      allow get: if isSignedIn() && isValidId(entryId) &&
+                    (existing().userId == request.auth.uid || existing().boardId == 'GLOBAL');
+
+      allow list: if isSignedIn() &&
+                     (existing().userId == request.auth.uid || existing().boardId == 'GLOBAL');
+
+      allow create: if isSignedIn() &&
+                       isValidId(entryId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'playerName', 'playerAvatarData', 'boardId', 'theme',
+                         'variationCount', 'patternComplexity',
+                         'completionTimeMillis', 'score', 'levelTitle',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'playerName', 'playerAvatarData', 'boardId', 'theme',
+                         'variationCount', 'patternComplexity',
+                         'completionTimeMillis', 'score', 'levelTitle',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidLeaderboardEntry(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(entryId) &&
+                       isValidLeaderboardEntry(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'playerName', 'playerAvatarData', 'boardId', 'completionTimeMillis', 'score', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() &&
+                       isValidId(entryId) &&
+                       existing().userId == request.auth.uid;
+    }
+
+    // Collection: User Profiles
+    match /user_profiles/{profileId} {
+      allow get: if isSignedIn() && isValidId(profileId);
+
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(profileId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'displayName', 'avatarData', 'avatarPrompt', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'displayName', 'avatarData', 'avatarPrompt', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming(), profileId);
+
+      allow update: if isSignedIn() &&
+                       isValidId(profileId) &&
+                       isValidUserProfile(incoming(), profileId) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'displayName', 'avatarData', 'avatarPrompt', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() &&
+                       isValidId(profileId) &&
+                       existing().userId == request.auth.uid;
+    }
+  }
+}

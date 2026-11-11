@@ -1,0 +1,223 @@
+{
+  "entities": {
+    "CustomLevel": {
+      "title": "CustomLevel",
+      "description": "User-created Spot the Difference level that can be saved privately or shared with friends.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated author UID (must match request.auth.uid)."
+        },
+        "authorName": {
+          "type": "string",
+          "description": "Display name of the level creator."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the custom Spot the Difference level."
+        },
+        "scenePrompt": {
+          "type": "string",
+          "description": "Prompt describing the visual scene for AI generation."
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["NATURE", "SPACE", "GEOMETRIC", "CYBERPUNK", "ANCIENT"],
+          "description": "Visual theme category."
+        },
+        "variationCount": {
+          "type": "integer",
+          "description": "Number of subtle differences to spot (3 to 10)."
+        },
+        "timeLimitSeconds": {
+          "type": "integer",
+          "description": "Time limit in seconds (20 to 300)."
+        },
+        "patternComplexity": {
+          "type": "string",
+          "enum": ["SUBTLE", "MODERATE", "INTRICATE"],
+          "description": "Complexity of the visual patterns and difference subtlety."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["PRIVATE", "SHARED"],
+          "description": "Whether the level is private to the creator or shared with friends/community."
+        },
+        "shareCode": {
+          "type": "string",
+          "description": "Short alphanumeric code to share the level with friends."
+        },
+        "spotsData": {
+          "type": "string",
+          "description": "Encoded difference hotspot coordinates, types, and descriptions."
+        },
+        "playsCount": {
+          "type": "integer",
+          "description": "Number of times this custom level has been played."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of level creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "authorName",
+        "title",
+        "scenePrompt",
+        "theme",
+        "variationCount",
+        "timeLimitSeconds",
+        "patternComplexity",
+        "visibility",
+        "shareCode",
+        "spotsData",
+        "playsCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Fastest completion time record for a Spot the Difference level, including the player's selected or AI-generated avatar.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated player UID (must match request.auth.uid)."
+        },
+        "playerName": {
+          "type": "string",
+          "description": "Display name of the player."
+        },
+        "playerAvatarData": {
+          "type": "string",
+          "description": "Preset avatar ID (e.g. preset:cyber_detective) or compact base64 data URI of an AI-generated avatar."
+        },
+        "boardId": {
+          "type": "string",
+          "enum": ["GLOBAL", "PRIVATE"],
+          "description": "Leaderboard scope (GLOBAL for public leaderboards, PRIVATE for personal history)."
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["NATURE", "SPACE", "GEOMETRIC", "CYBERPUNK", "ANCIENT"],
+          "description": "Theme of the completed level."
+        },
+        "variationCount": {
+          "type": "integer",
+          "description": "Number of differences spotted in the level (3 to 10)."
+        },
+        "patternComplexity": {
+          "type": "string",
+          "enum": ["SUBTLE", "MODERATE", "INTRICATE"],
+          "description": "Pattern complexity of the completed level."
+        },
+        "completionTimeMillis": {
+          "type": "integer",
+          "description": "Time taken to spot all differences in milliseconds."
+        },
+        "score": {
+          "type": "integer",
+          "description": "Calculated score based on speed, accuracy, variations, and complexity."
+        },
+        "levelTitle": {
+          "type": "string",
+          "description": "Title of the level completed."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the score was recorded (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the record (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "playerName",
+        "playerAvatarData",
+        "boardId",
+        "theme",
+        "variationCount",
+        "patternComplexity",
+        "completionTimeMillis",
+        "score",
+        "levelTitle",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Player profile storing display name and selected or AI-generated custom avatar.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated player UID (must match request.auth.uid and document ID)."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Player's chosen display name."
+        },
+        "avatarData": {
+          "type": "string",
+          "description": "Preset avatar ID or compact base64 data URI of an AI-generated avatar."
+        },
+        "avatarPrompt": {
+          "type": "string",
+          "description": "Prompt used to generate the custom AI avatar, if any."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of profile creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last profile update."
+        }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "avatarData",
+        "avatarPrompt",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/custom_levels/{levelId}": {
+      "schema": {
+        "$ref": "#/entities/CustomLevel"
+      },
+      "description": "Stores custom Spot the Difference levels created by users."
+    },
+    "/leaderboard_entries/{entryId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Stores fastest completion times, scores, and player avatars for the global leaderboard."
+    },
+    "/user_profiles/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores user profile display name and selected or AI-generated custom avatar."
+    }
+  }
+}

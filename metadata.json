@@ -1,0 +1,6 @@
+{
+  "name": "SpotDiff AI",
+  "description": "AI-powered Spot the Difference puzzle game with custom level designer, global leaderboards, dynamic themes, and customizable difficulty.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
